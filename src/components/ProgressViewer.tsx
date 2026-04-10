@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { TrainingPlan, PlanStatus } from '../types/plan';
 import { statusLabels, statusColors } from '../types/plan';
 import type { Person } from '../types/person';
@@ -15,11 +15,7 @@ export function ProgressViewer() {
   const [progressMap, setProgressMap] = useState<Record<string, PlanProgress>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const [plansData, personsData] = await Promise.all([
       planStorage.getAll(),
       personStorage.getAll(),
@@ -37,7 +33,12 @@ export function ProgressViewer() {
       progressRecord[plan.id] = progress;
     }
     setProgressMap(progressRecord);
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData();
+  }, [loadData]);
 
   const handleStatusChange = async (
     planId: string,
