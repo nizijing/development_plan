@@ -1,0 +1,329 @@
+.progress-viewer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.progress-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.progress-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.progress-card.expanded {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.progress-header:hover {
+  background: #f9fafb;
+}
+
+.progress-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-plan-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.status-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.progress-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.overall-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overall-bar-container {
+  width: 80px;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.overall-bar {
+  height: 100%;
+  background: #4f46e5;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.overall-text {
+  font-size: 12px;
+  color: #666;
+}
+
+.expand-icon {
+  font-size: 10px;
+  color: #999;
+  transition: transform 0.3s ease;
+}
+
+.expand-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.progress-details {
+  padding: 0 20px 16px;
+  border-top: 1px solid #f0f0f0;
+  animation: slideDown 0.3s ease;
+  pointer-events: auto;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.progress-table {
+  min-width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-top: 16px;
+  pointer-events: auto;
+}
+
+.table-header {
+  display: flex;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  min-width: max-content;
+}
+
+.table-body {
+  display: flex;
+  flex-direction: column;
+  min-width: max-content;
+  pointer-events: auto;
+}
+
+.table-row {
+  display: flex;
+  border-bottom: 1px solid #f0f0f0;
+  pointer-events: auto;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-row:hover {
+  background: #fafbfc;
+}
+
+.cell {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.header-cell {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+}
+
+.member-cell {
+  width: 120px;
+  min-width: 120px;
+}
+
+.stats-cell {
+  width: 130px;
+  min-width: 130px;
+}
+
+.task-cell {
+  width: 90px;
+  min-width: 90px;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.task-name {
+  font-size: 12px;
+  color: #555;
+  text-align: center;
+  word-break: break-word;
+}
+
+.member-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.member-avatar-placeholder {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.member-name {
+  font-size: 13px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progress-bar-container {
+  width: 60px;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-right: 8px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: #10b981;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 11px;
+  color: #666;
+}
+
+/* 状态按钮 */
+.status-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.status-btn:hover {
+  transform: scale(1.05);
+}
+
+.status-btn:active {
+  transform: scale(0.95);
+}
+
+.status-btn.pending {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-btn.pending:hover {
+  background: #e5e7eb;
+}
+
+.status-btn.in_progress {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-btn.in_progress:hover {
+  background: #fde68a;
+}
+
+.status-btn.completed {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.status-btn.completed:hover {
+  background: #a7f3d0;
+}
+
+/* 状态标签（只读） */
+.status-label {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-label.pending {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-label.in_progress {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-label.completed {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.empty-text {
+  text-align: center;
+  color: #999;
+  padding: 40px;
+}
