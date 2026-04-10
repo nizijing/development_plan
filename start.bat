@@ -8,7 +8,7 @@ echo 正在启动桌面应用...
 echo 数据将保存在本地文件中
 echo.
 
-cd /d "%~dp0app"
+cd /d "%~dp0"
 npm run tauri:dev
 
 if errorlevel 1 (

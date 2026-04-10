@@ -14,4 +14,4 @@ target/
 Thumbs.db
 
 # Data storage
-app/filestore/
+filestore/
