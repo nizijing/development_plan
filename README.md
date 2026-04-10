@@ -10,24 +10,24 @@
 
 ## 技术栈
 
-| 类型 | 技术 |
-|------|------|
+| 类型     | 技术                  |
+| -------- | --------------------- |
 | 前端框架 | React 19 + TypeScript |
-| 构建工具 | Vite 8 |
-| 桌面框架 | Tauri 2 |
-| 后端语言 | Rust |
-| 数据存储 | 本地 JSON 文件 |
+| 构建工具 | Vite 8                |
+| 桌面框架 | Tauri 2               |
+| 后端语言 | Rust                  |
+| 数据存储 | 本地 JSON 文件        |
 
 ## 环境要求
 
 运行本项目前，需要先安装以下软件：
 
-| 软件 | 必需 | 说明 |
-|------|------|------|
-| Node.js >= 18 | ✅ | JavaScript 运行时，包含 npm |
-| Rust >= 1.77 | ✅ | 编译 Tauri 后端 |
-| React | ❌ | `npm install` 自动安装 |
-| Tauri CLI | ❌ | `npm install` 自动安装 |
+| 软件          | 必需 | 说明                        |
+| ------------- | ---- | --------------------------- |
+| Node.js >= 18 | ✅   | JavaScript 运行时，包含 npm |
+| Rust >= 1.77  | ✅   | 编译 Tauri 后端             |
+| React         | ❌   | `npm install` 自动安装    |
+| Tauri CLI     | ❌   | `npm install` 自动安装    |
 
 ### 安装 Node.js
 
@@ -46,11 +46,28 @@ npm --version
 
 如果未安装 Rust，请运行：
 
-```bash
-# Windows (PowerShell)
-winget install Rustlang.Rustup
+**Windows (PowerShell) - 推荐先配置环境变量到数据盘：**
 
-# macOS / Linux
+```powershell
+# 1. 先设置环境变量（避免占用 C 盘空间）
+# 将 D:\Rust 替换为你想要的数据盘路径
+$env:RUSTUP_HOME = "D:\Rust\rustup"
+$env:CARGO_HOME = "D:\Rust\cargo"
+
+# 2. 永久设置用户环境变量
+[Environment]::SetEnvironmentVariable("RUSTUP_HOME", $env:RUSTUP_HOME, "User")
+[Environment]::SetEnvironmentVariable("CARGO_HOME", $env:CARGO_HOME, "User")
+
+# 3. 将 cargo 添加到 PATH
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";" + $env:CARGO_HOME + "\bin", "User")
+
+# 4. 安装 Rust
+winget install Rustlang.Rustup
+```
+
+**macOS / Linux：**
+
+```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
@@ -67,7 +84,7 @@ cargo --version
 
 ```bash
 git clone <repository-url>
-cd development_plan/app
+cd development_plan
 ```
 
 ### 2. 安装依赖
@@ -86,18 +103,18 @@ npm run tauri:dev
 
 ## 常用命令
 
-| 命令 | 说明 |
-|------|------|
-| `npm run tauri:dev` | 启动开发模式（热重载） |
-| `npm run tauri:build` | 构建生产版本 |
-| `npm run dev` | 仅启动前端开发服务器 |
-| `npm run build` | 仅构建前端 |
-| `npm run lint` | 代码检查 |
+| 命令                    | 说明                   |
+| ----------------------- | ---------------------- |
+| `npm run tauri:dev`   | 启动开发模式（热重载） |
+| `npm run tauri:build` | 构建生产版本           |
+| `npm run dev`         | 仅启动前端开发服务器   |
+| `npm run build`       | 仅构建前端             |
+| `npm run lint`        | 代码检查               |
 
 ## 项目结构
 
 ```
-app/
+development_plan/
 ├── src/                    # 前端源码
 │   ├── components/         # React 组件
 │   │   ├── PersonManager/  # 人员管理
