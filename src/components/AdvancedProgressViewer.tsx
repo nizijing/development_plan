@@ -146,7 +146,6 @@ export function AdvancedProgressViewer() {
           {sortedPlans.map(plan => {
             const overall = getOverallProgress(plan.id);
             const isExpanded = expandedId === plan.id;
-            const canEditProgress = true; // 所有advance类型的计划都可以编辑进度
 
             return (
               <div key={plan.id} className={`progress-card ${isExpanded ? 'expanded' : ''}`}>
