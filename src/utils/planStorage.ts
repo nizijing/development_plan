@@ -41,6 +41,11 @@ export const planStorage = {
     const filtered = plans.filter(p => p.id !== id);
     if (filtered.length === plans.length) return false;
     await this.save(filtered);
+    
+    // 删除对应的进度数据
+    const { progressStorage } = await import('./progressStorage');
+    await progressStorage.deleteByPlanId(id);
+    
     return true;
   },
 
