@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { TrainingPlan, PlanStatus } from '../types/plan';
-import { statusLabels, statusColors } from '../types/plan';
+import type { TrainingPlan } from '../types/plan';
+import { statusLabels } from '../types/plan';
 import type { Person } from '../types/person';
-import type { PlanProgress, MemberTaskProgress, TaskProgressStatus } from '../types/progress';
+import type { PlanProgress, TaskProgressStatus } from '../types/progress';
 import { planStorage } from '../utils/planStorage';
 import { personStorage } from '../utils/personStorage';
 import { progressStorage } from '../utils/progressStorage';
 import { checkAndUpdatePlanStatus } from '../utils/planStatusUpdater';
+import { getMemberProgress, getProgressStats, getOverallProgress, getStatusBadgeStyle, sortPlansByStatus } from '../utils/progressHelpers';
 import './ProgressViewer.css';
 
 export function AdvancedProgressViewer() {
@@ -43,33 +44,7 @@ export function AdvancedProgressViewer() {
     loadData();
   }, [loadData]);
 
-  const getMemberProgress = (planId: string, personId: string): MemberTaskProgress[] => {
-    const progress = progressMap[planId];
-    if (!progress) return [];
-    return progress.memberProgress.filter(m => m.personId === personId);
-  };
 
-  const getProgressStats = (planId: string, personId: string) => {
-    const memberProgress = getMemberProgress(planId, personId);
-    const total = memberProgress.length;
-    const completed = memberProgress.filter(m => m.status === 'completed').length;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, percentage };
-  };
-
-  const getOverallProgress = (planId: string) => {
-    const progress = progressMap[planId];
-    if (!progress) return { total: 0, completed: 0, percentage: 0 };
-    const total = progress.memberProgress.length;
-    const completed = progress.memberProgress.filter(m => m.status === 'completed').length;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, percentage };
-  };
-
-  const getStatusBadgeStyle = (status: PlanStatus) => ({
-    backgroundColor: statusColors[status],
-    color: 'white',
-  });
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -116,19 +91,16 @@ export function AdvancedProgressViewer() {
   };
 
   // 按状态分组排序：进行中 > 未开始 > 已完成
-  const sortedPlans = [...plans].sort((a, b) => {
-    const order: PlanStatus[] = ['in_progress', 'not_started', 'completed'];
-    return order.indexOf(a.status) - order.indexOf(b.status);
-  });
+  const sortedPlans = sortPlansByStatus(plans);
 
   return (
     <div className="progress-viewer">
       {plans.length === 0 ? (
-        <p className="empty-text">暂无进阶培养计划</p>
+        <p className="empty-text">暂无培养计划</p>
       ) : (
         <div className="progress-list">
           {sortedPlans.map(plan => {
-            const overall = getOverallProgress(plan.id);
+            const overall = getOverallProgress(progressMap, plan.id);
             const isExpanded = expandedId === plan.id;
 
             return (
@@ -170,8 +142,8 @@ export function AdvancedProgressViewer() {
                         <div className="table-body">
                           {plan.participantIds.map(personId => {
                             const person = persons.find(p => p.id === personId);
-                            const stats = getProgressStats(plan.id, personId);
-                            const memberProgress = getMemberProgress(plan.id, personId);
+                            const stats = getProgressStats(progressMap, plan.id, personId);
+                            const memberProgress = getMemberProgress(progressMap, plan.id, personId);
                             
                             return (
                               <div key={personId} className="table-row">

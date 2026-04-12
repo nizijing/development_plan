@@ -1,21 +1,31 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { TrainingPlan, PlanStatus } from '../types/plan';
-import { statusLabels, statusColors } from '../types/plan';
+import type { TrainingPlan } from '../types/plan';
+import { statusLabels } from '../types/plan';
 import type { Person } from '../types/person';
-import type { PlanProgress, MemberTaskProgress, TaskProgressStatus } from '../types/progress';
+import type { PlanProgress, TaskProgressStatus } from '../types/progress';
 import { taskProgressLabels } from '../types/progress';
 import { planStorage } from '../utils/planStorage';
 import { personStorage } from '../utils/personStorage';
 import { progressStorage } from '../utils/progressStorage';
 import { checkAndUpdatePlanStatus } from '../utils/planStatusUpdater';
+import { getMemberProgress, getProgressStats, getOverallProgress, getStatusBadgeStyle, sortPlansByStatus } from '../utils/progressHelpers';
 import './ProgressViewer.css';
 
+/**
+ * 普通进度查看器组件
+ * 用于展示和管理普通类型培养计划的进度
+ */
 export function ProgressViewer() {
-  const [plans, setPlans] = useState<TrainingPlan[]>([]);
-  const [persons, setPersons] = useState<Person[]>([]);
-  const [progressMap, setProgressMap] = useState<Record<string, PlanProgress>>({});
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // 状态管理
+  const [plans, setPlans] = useState<TrainingPlan[]>([]); // 培养计划列表
+  const [persons, setPersons] = useState<Person[]>([]); // 人员列表
+  const [progressMap, setProgressMap] = useState<Record<string, PlanProgress>>({}); // 进度数据映射，key为计划ID
+  const [expandedId, setExpandedId] = useState<string | null>(null); // 当前展开的计划ID
 
+  /**
+   * 加载数据
+   * 并行加载计划和人员数据，然后初始化进度数据
+   */
   const loadData = useCallback(async () => {
     const [plansData, personsData] = await Promise.all([
       planStorage.getAll(),
@@ -24,6 +34,7 @@ export function ProgressViewer() {
     setPlans(plansData);
     setPersons(personsData);
 
+    // 初始化每个计划的进度数据
     const progressRecord: Record<string, PlanProgress> = {};
     for (const plan of plansData) {
       const progress = await progressStorage.initPlanProgress(
@@ -36,16 +47,25 @@ export function ProgressViewer() {
     setProgressMap(progressRecord);
   }, []);
 
+  // 组件挂载时加载数据
   useEffect(() => {
     loadData();
   }, [loadData]);
 
+  /**
+   * 处理任务状态变更
+   * @param planId 计划ID
+   * @param personId 人员ID
+   * @param taskIndex 任务索引
+   * @param newStatus 新状态
+   */
   const handleStatusChange = async (
     planId: string,
     personId: string,
     taskIndex: number,
     newStatus: TaskProgressStatus
   ) => {
+    // 更新任务状态
     const updated = await progressStorage.updateTaskStatus(
       planId,
       personId,
@@ -53,8 +73,10 @@ export function ProgressViewer() {
       newStatus
     );
     if (updated) {
+      // 更新本地状态
       setProgressMap(prev => ({ ...prev, [planId]: updated }));
 
+      // 检查并更新计划状态
       const plan = plans.find(p => p.id === planId);
       const newStatus = await checkAndUpdatePlanStatus(planId, updated, plan);
       
@@ -65,38 +87,21 @@ export function ProgressViewer() {
     }
   };
 
-  const getMemberProgress = (planId: string, personId: string): MemberTaskProgress[] => {
-    const progress = progressMap[planId];
-    if (!progress) return [];
-    return progress.memberProgress.filter(m => m.personId === personId);
-  };
 
-  const getProgressStats = (planId: string, personId: string) => {
-    const memberProgress = getMemberProgress(planId, personId);
-    const total = memberProgress.length;
-    const completed = memberProgress.filter(m => m.status === 'completed').length;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, percentage };
-  };
 
-  const getOverallProgress = (planId: string) => {
-    const progress = progressMap[planId];
-    if (!progress) return { total: 0, completed: 0, percentage: 0 };
-    const total = progress.memberProgress.length;
-    const completed = progress.memberProgress.filter(m => m.status === 'completed').length;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, percentage };
-  };
-
-  const getStatusBadgeStyle = (status: PlanStatus) => ({
-    backgroundColor: statusColors[status],
-    color: 'white',
-  });
-
+  /**
+   * 切换计划的展开/折叠状态
+   * @param id 计划ID
+   */
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
+  /**
+   * 循环切换任务状态
+   * @param currentStatus 当前状态
+   * @returns 切换后的状态
+   */
   const cycleStatus = (currentStatus: TaskProgressStatus): TaskProgressStatus => {
     const statusOrder: TaskProgressStatus[] = ['pending', 'completed'];
     const currentIndex = statusOrder.indexOf(currentStatus);
@@ -104,24 +109,24 @@ export function ProgressViewer() {
   };
 
   // 按状态分组排序：进行中 > 未开始 > 已完成
-  const sortedPlans = [...plans].sort((a, b) => {
-    const order: PlanStatus[] = ['in_progress', 'not_started', 'completed'];
-    return order.indexOf(a.status) - order.indexOf(b.status);
-  });
+  const sortedPlans = sortPlansByStatus(plans);
 
   return (
     <div className="progress-viewer">
+      {/* 空状态提示 */}
       {plans.length === 0 ? (
         <p className="empty-text">暂无培养计划</p>
       ) : (
         <div className="progress-list">
+          {/* 遍历计划列表 */}
           {sortedPlans.map(plan => {
-            const overall = getOverallProgress(plan.id);
+            const overall = getOverallProgress(progressMap, plan.id);
             const isExpanded = expandedId === plan.id;
             const canEditProgress = true; // 所有状态都可以编辑
 
             return (
               <div key={plan.id} className={`progress-card ${isExpanded ? 'expanded' : ''}`}>
+                {/* 计划头部 */}
                 <div className="progress-header" onClick={() => toggleExpand(plan.id)}>
                   <div className="progress-title-row">
                     <h2 className="progress-plan-name">{plan.name}</h2>
@@ -140,10 +145,12 @@ export function ProgressViewer() {
                   </div>
                 </div>
 
+                {/* 计划详情 */}
                 {isExpanded && (
                   <div className="progress-details">
                     <div className="progress-table">
                       <div className="progress-table-content">
+                        {/* 表格头部 */}
                         <div className="table-header">
                           <div className="cell header-cell member-cell">成员</div>
                           <div className="cell header-cell stats-cell">进度</div>
@@ -156,14 +163,17 @@ export function ProgressViewer() {
                           </div>
                         </div>
                         
+                        {/* 表格内容 */}
                         <div className="table-body">
+                          {/* 遍历参与人员 */}
                           {plan.participantIds.map(personId => {
                             const person = persons.find(p => p.id === personId);
-                            const stats = getProgressStats(plan.id, personId);
-                            const memberProgress = getMemberProgress(plan.id, personId);
+                            const stats = getProgressStats(progressMap, plan.id, personId);
+                            const memberProgress = getMemberProgress(progressMap, plan.id, personId);
                             
                             return (
                               <div key={personId} className="table-row">
+                                {/* 成员信息 */}
                                 <div className="cell member-cell">
                                   <div className="member-info">
                                     {person?.avatar ? (
@@ -177,6 +187,7 @@ export function ProgressViewer() {
                                   </div>
                                 </div>
                                 
+                                {/* 进度信息 */}
                                 <div className="cell stats-cell">
                                   <div className="progress-bar-container">
                                     <div className="progress-bar" style={{ width: `${stats.percentage}%` }} />
@@ -186,6 +197,7 @@ export function ProgressViewer() {
                                   </div>
                                 </div>
                                 
+                                {/* 任务列 */}
                                 <div className="task-columns-body">
                                   {memberProgress.map((mp, index) => (
                                     <div key={index} className="cell task-cell">
