@@ -3,7 +3,6 @@ import type { TrainingPlan, PlanStatus } from '../types/plan';
 import { statusLabels, statusColors } from '../types/plan';
 import type { Person } from '../types/person';
 import type { PlanProgress, MemberTaskProgress, TaskProgressStatus } from '../types/progress';
-import { taskProgressLabels } from '../types/progress';
 import { planStorage } from '../utils/planStorage';
 import { personStorage } from '../utils/personStorage';
 import { progressStorage } from '../utils/progressStorage';
@@ -40,50 +39,8 @@ export function AdvancedProgressViewer() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData();
   }, [loadData]);
-
-  const handleStatusChange = async (
-    planId: string,
-    personId: string,
-    taskIndex: number,
-    newStatus: TaskProgressStatus
-  ) => {
-    const updated = await progressStorage.updateTaskStatus(
-      planId,
-      personId,
-      taskIndex,
-      newStatus
-    );
-    if (updated) {
-      setProgressMap(prev => ({ ...prev, [planId]: updated }));
-
-      const allCompleted = updated.memberProgress.every(mp => mp.status === 'completed');
-      const allPending = updated.memberProgress.every(mp => mp.status === 'pending');
-      const hasInProgressOrCompleted = updated.memberProgress.some(mp => mp.status === 'completed');
-
-      const plan = plans.find(p => p.id === planId);
-      
-      // 检查是否需要更新计划状态
-      if (allCompleted) {
-        await planStorage.update(planId, { status: 'completed' });
-        loadData();
-      } else if (allPending) {
-        // 如果所有任务都未开始，则将计划状态改为未开始
-        await planStorage.update(planId, { status: 'not_started' });
-        loadData();
-      } else if (plan?.status === 'not_started' && hasInProgressOrCompleted) {
-        // 如果计划状态是未启动，且有任务已完成，则改为进行中
-        await planStorage.update(planId, { status: 'in_progress' });
-        loadData();
-      } else if (plan?.status === 'completed') {
-        // 如果计划状态是已完成，但有任务未完成，则改为进行中
-        await planStorage.update(planId, { status: 'in_progress' });
-        loadData();
-      }
-    }
-  };
 
   const getMemberProgress = (planId: string, personId: string): MemberTaskProgress[] => {
     const progress = progressMap[planId];
@@ -115,10 +72,6 @@ export function AdvancedProgressViewer() {
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
-  };
-
-  const cycleStatus = (currentStatus: TaskProgressStatus): TaskProgressStatus => {
-    return currentStatus === 'pending' ? 'completed' : 'pending';
   };
 
   // 处理进阶类型计划的文本输入
