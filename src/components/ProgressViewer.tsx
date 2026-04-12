@@ -152,8 +152,10 @@ export function ProgressViewer() {
                       <div className="progress-table-content">
                         {/* 表格头部 */}
                         <div className="table-header">
-                          <div className="cell header-cell member-cell">成员</div>
-                          <div className="cell header-cell stats-cell">进度</div>
+                          <div className="fixed-columns">
+                            <div className="cell header-cell member-cell">成员</div>
+                            <div className="cell header-cell stats-cell">进度</div>
+                          </div>
                           <div className="task-columns-header">
                             {plan.tasks.map((task, index) => (
                               <div key={index} className="cell header-cell task-cell">
@@ -173,27 +175,29 @@ export function ProgressViewer() {
                             
                             return (
                               <div key={personId} className="table-row">
-                                {/* 成员信息 */}
-                                <div className="cell member-cell">
-                                  <div className="member-info">
-                                    {person?.avatar ? (
-                                      <img src={person.avatar} alt={person.name} className="member-avatar" />
-                                    ) : (
-                                      <div className="member-avatar-placeholder">
-                                        {person?.name?.charAt(0) || '?'}
-                                      </div>
-                                    )}
-                                    <span className="member-name">{person?.name || '未知'}</span>
+                                <div className="fixed-columns">
+                                  {/* 成员信息 */}
+                                  <div className="cell member-cell">
+                                    <div className="member-info">
+                                      {person?.avatar ? (
+                                        <img src={person.avatar} alt={person.name} className="member-avatar" />
+                                      ) : (
+                                        <div className="member-avatar-placeholder">
+                                          {person?.name?.charAt(0) || '?'}
+                                        </div>
+                                      )}
+                                      <span className="member-name">{person?.name || '未知'}</span>
+                                    </div>
                                   </div>
-                                </div>
-                                
-                                {/* 进度信息 */}
-                                <div className="cell stats-cell">
-                                  <div className="progress-bar-container">
-                                    <div className="progress-bar" style={{ width: `${stats.percentage}%` }} />
-                                  </div>
-                                  <div className="progress-text">
-                                    {stats.completed}/{stats.total} ({stats.percentage}%)
+                                  
+                                  {/* 进度信息 */}
+                                  <div className="cell stats-cell">
+                                    <div className="progress-bar-container">
+                                      <div className="progress-bar" style={{ width: `${stats.percentage}%` }} />
+                                    </div>
+                                    <div className="progress-text">
+                                      {stats.completed}/{stats.total} ({stats.percentage}%)
+                                    </div>
                                   </div>
                                 </div>
                                 
