@@ -55,16 +55,28 @@ export function ProgressViewer() {
       setProgressMap(prev => ({ ...prev, [planId]: updated }));
 
       const allCompleted = updated.memberProgress.every(mp => mp.status === 'completed');
+      const allPending = updated.memberProgress.every(mp => mp.status === 'pending');
+      const hasCompleted = updated.memberProgress.some(mp => mp.status === 'completed');
 
+      const plan = plans.find(p => p.id === planId);
+      
+      // 检查是否需要更新计划状态
       if (allCompleted) {
         await planStorage.update(planId, { status: 'completed' });
-        loadData();
-      } else {
-        const plan = plans.find(p => p.id === planId);
-        if (plan?.status === 'completed') {
-          await planStorage.update(planId, { status: 'in_progress' });
-          loadData();
-        }
+        // 只更新计划状态，不重新加载整个数据
+        setPlans(prev => prev.map(p => p.id === planId ? { ...p, status: 'completed' } : p));
+      } else if (allPending) {
+        // 如果所有任务都未开始，则将计划状态改为未开始
+        await planStorage.update(planId, { status: 'not_started' });
+        setPlans(prev => prev.map(p => p.id === planId ? { ...p, status: 'not_started' } : p));
+      } else if (plan?.status === 'not_started' && hasCompleted) {
+        // 如果计划状态是未启动，且有任务已完成，则改为进行中
+        await planStorage.update(planId, { status: 'in_progress' });
+        setPlans(prev => prev.map(p => p.id === planId ? { ...p, status: 'in_progress' } : p));
+      } else if (plan?.status === 'completed') {
+        // 如果计划状态是已完成，但有任务未完成，则改为进行中
+        await planStorage.update(planId, { status: 'in_progress' });
+        setPlans(prev => prev.map(p => p.id === planId ? { ...p, status: 'in_progress' } : p));
       }
     }
   };
