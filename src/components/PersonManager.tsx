@@ -15,44 +15,6 @@ export function PersonManager() {
     personStorage.getAll().then(setPersons);
   }, []);
 
-  // 压缩图片
-  const compressImage = (file: File, maxWidth: number, quality: number): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        img.src = e.target?.result as string;
-      };
-      
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        
-        // 如果宽度超过最大值，等比缩放
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        // 压缩为 JPEG 格式
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      
-      img.onerror = () => reject(new Error('图片加载失败'));
-      reader.onerror = () => reject(new Error('文件读取失败'));
-      
-      reader.readAsDataURL(file);
-    });
-  };
-
   const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -73,9 +35,17 @@ export function PersonManager() {
     }
     
     try {
-      // 压缩图片：最大宽度 200px，质量 0.7
-      const compressed = await compressImage(file, 200, 0.7);
-      setFormData(prev => ({ ...prev, avatar: compressed }));
+      // 直接读取文件为 base64，不压缩
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setFormData(prev => ({ ...prev, avatar: result }));
+      };
+      reader.onerror = () => {
+        alert('图片处理失败，请重试');
+        e.target.value = '';
+      };
+      reader.readAsDataURL(file);
     } catch {
       alert('图片处理失败，请重试');
       e.target.value = '';

@@ -407,7 +407,8 @@
 }
 
 .edit-btn,
-.delete-btn {
+.delete-btn,
+.archive-btn {
   padding: 6px 14px;
   border: none;
   border-radius: 6px;
@@ -423,6 +424,15 @@
 
 .edit-btn:hover {
   background: #bae6fd;
+}
+
+.archive-btn {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.archive-btn:hover {
+  background: #e9d5ff;
 }
 
 .delete-btn {

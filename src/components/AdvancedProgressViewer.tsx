@@ -9,7 +9,7 @@ import { personStorage } from '../utils/personStorage';
 import { progressStorage } from '../utils/progressStorage';
 import './ProgressViewer.css';
 
-export function ProgressViewer() {
+export function AdvancedProgressViewer() {
   const [plans, setPlans] = useState<TrainingPlan[]>([]);
   const [persons, setPersons] = useState<Person[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, PlanProgress>>({});
@@ -20,11 +20,15 @@ export function ProgressViewer() {
       planStorage.getAll(),
       personStorage.getAll(),
     ]);
-    setPlans(plansData);
+    // 只显示类型为"advance"的计划
+    const advancedPlans = plansData.filter(plan => (plan.type as string) === 'advance');
+
+
+    setPlans(advancedPlans);
     setPersons(personsData);
 
     const progressRecord: Record<string, PlanProgress> = {};
-    for (const plan of plansData) {
+    for (const plan of advancedPlans) {
       const progress = await progressStorage.initPlanProgress(
         plan.id,
         plan.participantIds,
@@ -56,16 +60,27 @@ export function ProgressViewer() {
       setProgressMap(prev => ({ ...prev, [planId]: updated }));
 
       const allCompleted = updated.memberProgress.every(mp => mp.status === 'completed');
+      const allPending = updated.memberProgress.every(mp => mp.status === 'pending');
+      const hasInProgressOrCompleted = updated.memberProgress.some(mp => mp.status === 'completed');
 
+      const plan = plans.find(p => p.id === planId);
+      
+      // 检查是否需要更新计划状态
       if (allCompleted) {
         await planStorage.update(planId, { status: 'completed' });
         loadData();
-      } else {
-        const plan = plans.find(p => p.id === planId);
-        if (plan?.status === 'completed') {
-          await planStorage.update(planId, { status: 'in_progress' });
-          loadData();
-        }
+      } else if (allPending) {
+        // 如果所有任务都未开始，则将计划状态改为未开始
+        await planStorage.update(planId, { status: 'not_started' });
+        loadData();
+      } else if (plan?.status === 'not_started' && hasInProgressOrCompleted) {
+        // 如果计划状态是未启动，且有任务已完成，则改为进行中
+        await planStorage.update(planId, { status: 'in_progress' });
+        loadData();
+      } else if (plan?.status === 'completed') {
+        // 如果计划状态是已完成，但有任务未完成，则改为进行中
+        await planStorage.update(planId, { status: 'in_progress' });
+        loadData();
       }
     }
   };
@@ -103,9 +118,64 @@ export function ProgressViewer() {
   };
 
   const cycleStatus = (currentStatus: TaskProgressStatus): TaskProgressStatus => {
-    const statusOrder: TaskProgressStatus[] = ['pending', 'completed'];
-    const currentIndex = statusOrder.indexOf(currentStatus);
-    return statusOrder[(currentIndex + 1) % statusOrder.length];
+    return currentStatus === 'pending' ? 'completed' : 'pending';
+  };
+
+  // 处理进阶类型计划的文本输入
+  const handleHandwrittenInput = async (
+    planId: string,
+    personId: string,
+    taskIndex: number,
+    value: string
+  ) => {
+    // 根据输入内容判断任务状态
+    const newStatus: TaskProgressStatus = value.trim() ? 'completed' : 'pending';
+    const updated = await progressStorage.updateTaskStatus(
+      planId,
+      personId,
+      taskIndex,
+      newStatus,
+      value
+    );
+    if (updated) {
+      // 直接更新本地状态，不重新加载整个计划数据
+      setProgressMap(prev => {
+        const updatedProgress = { ...prev[planId] };
+        const memberIndex = updatedProgress.memberProgress.findIndex(
+          m => m.personId === personId && m.taskIndex === taskIndex
+        );
+        if (memberIndex !== -1) {
+          updatedProgress.memberProgress[memberIndex].value = value;
+          updatedProgress.memberProgress[memberIndex].status = newStatus;
+        }
+        return { ...prev, [planId]: updatedProgress };
+      });
+
+      const allCompleted = updated.memberProgress.every(mp => mp.status === 'completed');
+      const allPending = updated.memberProgress.every(mp => mp.status === 'pending');
+      const hasCompleted = updated.memberProgress.some(mp => mp.status === 'completed');
+
+      const plan = plans.find(p => p.id === planId);
+      
+      // 检查是否需要更新计划状态
+      if (allCompleted) {
+        await planStorage.update(planId, { status: 'completed' });
+        // 只更新计划状态，不重新加载整个数据
+        setPlans(prev => prev.map(p => p.id === planId ? { ...p, status: 'completed' } : p));
+      } else if (allPending) {
+        // 如果所有任务都未开始，则将计划状态改为未开始
+        await planStorage.update(planId, { status: 'not_started' });
+        setPlans(prev => prev.map(p => p.id === planId ? { ...p, status: 'not_started' } : p));
+      } else if (plan?.status === 'not_started' && hasCompleted) {
+        // 如果计划状态是未启动，且有任务已完成，则改为进行中
+        await planStorage.update(planId, { status: 'in_progress' });
+        setPlans(prev => prev.map(p => p.id === planId ? { ...p, status: 'in_progress' } : p));
+      } else if (plan?.status === 'completed') {
+        // 如果计划状态是已完成，但有任务未完成，则改为进行中
+        await planStorage.update(planId, { status: 'in_progress' });
+        setPlans(prev => prev.map(p => p.id === planId ? { ...p, status: 'in_progress' } : p));
+      }
+    }
   };
 
   // 按状态分组排序：进行中 > 未开始 > 已完成
@@ -117,13 +187,13 @@ export function ProgressViewer() {
   return (
     <div className="progress-viewer">
       {plans.length === 0 ? (
-        <p className="empty-text">暂无培养计划</p>
+        <p className="empty-text">暂无进阶培养计划</p>
       ) : (
         <div className="progress-list">
           {sortedPlans.map(plan => {
             const overall = getOverallProgress(plan.id);
             const isExpanded = expandedId === plan.id;
-            const canEditProgress = true; // 所有状态都可以编辑
+            const canEditProgress = true; // 所有advance类型的计划都可以编辑进度
 
             return (
               <div key={plan.id} className={`progress-card ${isExpanded ? 'expanded' : ''}`}>
@@ -194,22 +264,31 @@ export function ProgressViewer() {
                                 <div className="task-columns-body">
                                   {memberProgress.map((mp, index) => (
                                     <div key={index} className="cell task-cell">
-                                      {canEditProgress ? (
-                                        <button
-                                          className={`status-btn ${mp.status}`}
-                                          onClick={e => {
-                                            e.stopPropagation();
-                                            handleStatusChange(plan.id, personId, mp.taskIndex, cycleStatus(mp.status));
-                                          }}
-                                          title="点击切换状态"
-                                        >
-                                          {taskProgressLabels[mp.status]}
-                                        </button>
-                                      ) : (
-                                        <span className={`status-label ${mp.status}`}>
-                                          {taskProgressLabels[mp.status]}
-                                        </span>
-                                      )}
+                                      <input
+                                        type="text"
+                                        className="handwritten-input"
+                                        placeholder="请输入内容"
+                                        value={mp.value}
+                                        onChange={e => {
+                                          e.stopPropagation();
+                                          setProgressMap(prev => {
+                                            const updatedProgress = { ...prev[plan.id] };
+                                            const memberIndex = updatedProgress.memberProgress.findIndex(
+                                              m => m.personId === personId && m.taskIndex === mp.taskIndex
+                                            );
+                                            if (memberIndex !== -1) {
+                                              updatedProgress.memberProgress[memberIndex].value = e.target.value;
+                                              updatedProgress.memberProgress[memberIndex].status = e.target.value.trim() ? 'completed' : 'pending';
+                                            }
+                                            return { ...prev, [plan.id]: updatedProgress };
+                                          });
+                                        }}
+                                        onBlur={e => {
+                                          e.stopPropagation();
+                                          handleHandwrittenInput(plan.id, personId, mp.taskIndex, e.target.value);
+                                        }}
+                                        title="填写内容表示已完成"
+                                      />
                                     </div>
                                   ))}
                                 </div>

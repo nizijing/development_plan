@@ -123,22 +123,76 @@
   min-width: 100%;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  overflow-x: auto;
   margin-top: 16px;
   pointer-events: auto;
+  position: relative;
+}
+
+.progress-table-content {
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+}
+
+.task-columns-header {
+  display: flex;
+  flex: 1;
+  min-width: min-content;
+}
+
+.task-columns-body {
+  display: flex;
+  flex: 1;
+  min-width: min-content;
 }
 
 .table-header {
   display: flex;
   background: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
-  min-width: max-content;
+  min-width: min-content;
+}
+
+.table-row {
+  display: flex;
+  border-bottom: 1px solid #f0f0f0;
+  pointer-events: auto;
+  min-height: 48px;
+  min-width: min-content;
+}
+
+.fixed-columns {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: white;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+}
+
+.scrollable-columns {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e5e7eb;
+}
+
+.task-columns {
+  flex: 1;
+  min-width: min-content;
+}
+
+.table-header {
+  display: flex;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  min-width: min-content;
 }
 
 .table-body {
   display: flex;
   flex-direction: column;
-  min-width: max-content;
+  min-width: min-content;
   pointer-events: auto;
 }
 
@@ -146,6 +200,7 @@
   display: flex;
   border-bottom: 1px solid #f0f0f0;
   pointer-events: auto;
+  min-height: 48px;
 }
 
 .table-row:last-child {
@@ -161,6 +216,8 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  min-height: 48px;
+  box-sizing: border-box;
 }
 
 .header-cell {
@@ -326,4 +383,26 @@
   text-align: center;
   color: #999;
   padding: 40px;
+}
+
+/* 手写类型输入框 */
+.handwritten-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 11px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.handwritten-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+.handwritten-input::placeholder {
+  color: #9ca3af;
+  font-style: italic;
 }

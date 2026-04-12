@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import type { TrainingPlan, PlanStatus } from '../types/plan';
+import type { TrainingPlan, PlanStatus, PlanType } from '../types/plan';
 import { statusLabels, statusColors } from '../types/plan';
 import type { Person } from '../types/person';
 import { planStorage } from '../utils/planStorage';
 import { personStorage } from '../utils/personStorage';
+import { progressStorage } from '../utils/progressStorage';
 import './PlanManager.css';
 
 export function PlanManager() {
@@ -16,11 +17,13 @@ export function PlanManager() {
     name: string;
     tasks: string[];
     participantIds: string[];
+    type: PlanType;
     status: PlanStatus;
   }>({
     name: '',
     tasks: [''],
     participantIds: [],
+    type: 'normal',
     status: 'not_started',
   });
 
@@ -81,18 +84,24 @@ export function PlanManager() {
     }
 
     if (editingId) {
-      await planStorage.update(editingId, {
+      const updates: Partial<TrainingPlan> = {
         name: formData.name.trim(),
         tasks: validTasks,
         participantIds: formData.participantIds,
-        status: formData.status,
-      });
+        type: formData.type,
+      };
+      
+      await planStorage.update(editingId, updates);
+      
+      // 重新初始化计划进度，确保新添加的人员有任务进度
+      await progressStorage.initPlanProgress(editingId, formData.participantIds, validTasks.length);
     } else {
       await planStorage.add({
         name: formData.name.trim(),
         tasks: validTasks,
         participantIds: formData.participantIds,
-        status: formData.status,
+        type: formData.type,
+        status: 'not_started',
       });
     }
 
@@ -106,7 +115,8 @@ export function PlanManager() {
       name: plan.name,
       tasks: plan.tasks.length > 0 ? plan.tasks : [''],
       participantIds: plan.participantIds,
-      status: plan.status,
+      type: plan.type || 'normal',
+      status: plan.status || 'not_started',
     });
     setShowForm(true);
   };
@@ -118,6 +128,15 @@ export function PlanManager() {
     }
   };
 
+  const handleArchive = async (id: string) => {
+    if (confirm('确定要归档此培养计划吗？')) {
+      await planStorage.archive(id);
+      setPlans(await planStorage.getAll());
+    }
+  };
+
+  
+
   const resetForm = () => {
     setEditingId(null);
     setFormData({
@@ -125,6 +144,7 @@ export function PlanManager() {
       tasks: [''],
       participantIds: [],
       status: 'not_started',
+      type: 'normal',
     });
     setShowForm(false);
   };
@@ -204,16 +224,13 @@ export function PlanManager() {
             </div>
 
             <div className="form-group">
-              <label>状态</label>
+              <label>计划类型</label>
               <select
-                value={formData.status}
-                onChange={e => setFormData(prev => ({ ...prev, status: e.target.value as PlanStatus }))}
+                value={formData.type}
+                onChange={e => setFormData(prev => ({ ...prev, type: e.target.value as PlanType }))}
               >
-                {Object.entries(statusLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
+                <option value="normal">普通</option>
+                <option value="advance">进阶</option>
               </select>
             </div>
 
@@ -290,6 +307,9 @@ export function PlanManager() {
                   <div className="plan-actions-bar">
                     <button className="edit-btn" onClick={e => { e.stopPropagation(); handleEdit(plan); }}>
                       编辑
+                    </button>
+                    <button className="archive-btn" onClick={e => { e.stopPropagation(); handleArchive(plan.id); }}>
+                      归档
                     </button>
                     <button className="delete-btn" onClick={e => { e.stopPropagation(); handleDelete(plan.id); }}>
                       删除

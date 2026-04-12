@@ -1,4 +1,5 @@
 export type PlanStatus = 'not_started' | 'in_progress' | 'completed';
+export type PlanType = 'normal' | 'advance' ;
 
 export interface TrainingPlan {
   id: string;
@@ -6,8 +7,7 @@ export interface TrainingPlan {
   tasks: string[]; // 培养任务列表
   participantIds: string[]; // 参与人员ID列表
   status: PlanStatus;
-  createdAt: number;
-  updatedAt: number;
+  type: PlanType; 
 }
 
 export const statusLabels: Record<PlanStatus, string> = {
